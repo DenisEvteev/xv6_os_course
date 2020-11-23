@@ -61,52 +61,59 @@ int main(int argc, char **argv) // argv[1] -- the filename to read input data fr
         exit();
     }
 
-
+    /**
+     * We can have two types of double options: -c -i; -d -i.
+     * */
     char c;
     argv += 2; // rn this pointer points to the begining of options
     
+    //ex: uniq    cool_file  -c       -i     (C-like array the last el is NULL)
+    //    argv[0] argv[1]   argv[2] argv[3]
+   
     while(argv[0]) {
-         if (argv[0][0] != '-') {
-            ++argv;
-            continue;
-        }
-        c = *(++argv[0]);
-        switch (c) {
-             case 'c' : {
-             	info = uniq(fd, buf, &lines, flag_i);
-             	int i = 0;
+        if (argv[0][0] == '-')
+            break;
+	++argv;
+    }
+    c = *(++argv[0]);
+    if(!(c == 'd' || c == 'c' || c == 'i')) {
+	printf(2, "Bad option!\n");
+	exit();
+    }
+    argv++;
+    if(c == 'i' || (argv && argv[0][0] == '-' && argv[0][1] == 'i'))
+	    flag_i = 1;
+    info = uniq(fd, buf, &lines, flag_i);
+    if (c == 'i') {
+	    if(argv && argv[0][0] == '-' && (argv[0][1] == 'c' || argv[0][1] == 'd'))
+		    c = argv[0][1];
+    }
+    
+    switch (c) {
+	    case 'c' : {
+		int i = 0;
                 while (i < lines) {
-                    printf(1, "%d %s\n", info[i].repeat, buf + info[i].str_beg);
-                    ++i;
-                }
-             	free(info);
-             	close(fd);
-                free(buf);
-                exit();
+                   	printf(1, "%d %s\n", info[i].repeat, buf + info[i].str_beg);
+                    	++i;
+		}
                 break;
             }
-            case 'd' :
-                info = uniq(fd, buf, &lines, flag_i);
+            case 'd' : {
                 int i = 0;
                 while (i < lines) {
                     if(info[i].repeat >= 2)
                         printf(1, "%s\n", buf + info[i].str_beg);
-                   	++i;
+                    ++i;
                 }
-              	free(info);
-                close(fd);
-                free(buf);
-                exit();
                 break;
+	    }
             case 'i' :
-                flag_i = 1;
+                print_basic_unique(info, buf);
                 break;
-        }
-        ++argv;
+	    default:
+		printf(2, "Weird case, some strange letter");
+		break;
     }
-    info = uniq(fd, buf, &lines, flag_i);
-    print_basic_unique(info, buf);
- 
     free(info);
     close(fd);
     free(buf);
